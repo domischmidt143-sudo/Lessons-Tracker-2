@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Korepetycje Widget</title>
+
+<style>
+body {
+  margin: 0;
+  background: #191919;
+  font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ===== KARTA ===== */
+.card {
+  width: 320px;
+  background: #1f1f1f;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.4);
+}
+
+/* ===== IMIĘ UCZNIA ===== */
+.student-name {
+  color: #ff006b;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  outline: none;
+}
+
+.student-name:empty:before {
+  content: "Imię i nazwisko ucznia";
+  opacity: 0.5;
+}
+
+/* ===== TEMAT ===== */
+.topic {
+  display: grid;
+  grid-template-columns: 26px 1fr 20px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+/* CHECKBOX */
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ff006b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.checkbox.checked {
+  background: #ff006b;
+}
+
+/* TEKST */
+.topic-text {
+  color: #e6e6e6;
+  word-break: break-word;
+}
+
+.topic-text.done {
+  text-decoration: line-through;
+  text-decoration-color: #ff006b;
+}
+
+/* DELETE X */
+.delete-btn {
+  color: #ff006b;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.topic:hover .delete-btn {
+  opacity: 0.8;
+}
+
+.delete-btn:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+/* ===== ADD INPUT ===== */
+.add-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.add-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  color: white;
+  outline: none;
+  padding: 4px;
+}
+
+.add-input::placeholder {
+  color: #777;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <div class="student-name" contenteditable="true" id="studentName"></div>
+
+  <div id="topicList"></div>
+
+  <div class="add-row">
+    <input class="add-input" id="topicInput" placeholder="+ add topic" />
+  </div>
+
+</div>
+
+<script>
+const topicList = document.getElementById("topicList");
+const topicInput = document.getElementById("topicInput");
+const studentName = document.getElementById("studentName");
+
+let topics = [];
+
+/* ===== LOCAL STORAGE ===== */
+function saveData() {
+  const data = {
+    name: studentName.innerText,
+    topics
+  };
+  localStorage.setItem("tutoringWidgetData_v2", JSON.stringify(data));
+}
+
+function loadData() {
+  const data = JSON.parse(localStorage.getItem("tutoringWidgetData_v2"));
+  if (data) {
+    studentName.innerText = data.name || "";
+    topics = data.topics || [];
+  }
+}
+
+/* ===== RENDER ===== */
+function renderTopics() {
+  topicList.innerHTML = "";
+
+  topics.forEach((t, index) => {
+
+    const div = document.createElement("div");
+    div.className = "topic";
+
+    /* CHECKBOX */
+    const checkbox = document.createElement("div");
+    checkbox.className = "checkbox";
+    if (t.done) checkbox.classList.add("checked");
+
+    checkbox.onclick = () => {
+      topics[index].done = !topics[index].done;
+      saveData();
+      renderTopics();
+    };
+
+    /* TEXT */
+    const span = document.createElement("div");
+    span.className = "topic-text";
+    if (t.done) span.classList.add("done");
+    span.textContent = t.text;
+
+    /* DELETE */
+    const del = document.createElement("div");
+    del.className = "delete-btn";
+    del.textContent = "✕";
+
+    del.onclick = () => {
+      topics.splice(index, 1);
+      saveData();
+      renderTopics();
+    };
+
+    div.appendChild(checkbox);
+    div.appendChild(span);
+    div.appendChild(del);
+
+    topicList.appendChild(div);
+  });
+}
+
+/* ===== ADD TOPIC INLINE ===== */
+topicInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+
+    const text = topicInput.value.trim();
+    if (!text) return;
+
+    topics.push({
+      text,
+      done: false
+    });
+
+    topicInput.value = "";
+    saveData();
+    renderTopics();
+  }
+});
+
+/* ===== NAME SAVE ===== */
+studentName.addEventListener("input", saveData);
+
+/* ===== START ===== */
+loadData();
+renderTopics();
+</script>
+
+</body>
+</html>
